@@ -95,7 +95,15 @@ def autocorrect(user_word, valid_words, diff_function, limit):
     than LIMIT.
     """
     # BEGIN PROBLEM 5
-    "*** YOUR CODE HERE ***"
+    if user_word in valid_words:
+        return user_word
+    diff = []
+    for i in valid_words:
+        diff.append(diff_function(user_word, i, limit))
+    if min(diff) > limit:
+        return user_word
+    else:
+        return valid_words[diff.index(min(diff))]
     # END PROBLEM 5
 
 
@@ -105,31 +113,44 @@ def sphinx_swap(start, goal, limit):
     their lengths.
     """
     # BEGIN PROBLEM 6
-    assert False, 'Remove this line'
+    lena, lenb = len(start), len(goal)
+    eff_len = min(lena, lenb)
+    start_, goal_ = start[:eff_len], goal[:eff_len]
+    def diff(a, b, depth):
+        if depth > limit:
+            if len(a) == 0:
+                return 0
+            if a[0] == b[0]:
+                return 0
+            else:
+                return 1
+        else:
+            if len(a) == 0:
+                return 0
+            if a[0] == b[0]:
+                return diff(a[1:], b[1:], depth)
+            else:
+                return 1 + diff(a[1:], b[1:], depth + 1)
+    return diff(start_, goal_, 0) + abs(lenb - lena)
     # END PROBLEM 6
 
 
 def feline_fixes(start, goal, limit):
     """A diff function that computes the edit distance from START to GOAL."""
-    assert False, 'Remove this line'
+    if limit < 0:
+        return 0 #quit the recursion
 
-    if ______________: # Fill in the condition
-        # BEGIN
-        "*** YOUR CODE HERE ***"
-        # END
-
-    elif ___________: # Feel free to remove or add additional cases
-        # BEGIN
-        "*** YOUR CODE HERE ***"
-        # END
+    elif len(start) == 0 or len(goal) == 0:
+        return len(start) or len(goal)
 
     else:
-        add_diff = ...  # Fill in these lines
-        remove_diff = ... 
-        substitute_diff = ... 
-        # BEGIN
-        "*** YOUR CODE HERE ***"
-        # END
+        if start[0] == goal[0]:
+            return feline_fixes(start[1:], goal[1:], limit)
+        else:
+            add_diff = feline_fixes(start[1:], goal, limit - 1)
+            remove_diff = feline_fixes(start, goal[1:], limit - 1)
+            substitute_diff = feline_fixes(start[1:], goal[1:], limit - 1)
+            return 1 + min(add_diff, remove_diff, substitute_diff)
 
 
 def final_diff(start, goal, limit):
