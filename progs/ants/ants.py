@@ -52,6 +52,7 @@ class Insect:
 
     damage = 0
     # ADD CLASS ATTRIBUTES HERE
+    is_watersafe = False
 
     def __init__(self, armor, place=None):
         """Create an Insect with an ARMOR amount and a starting PLACE."""
@@ -108,6 +109,7 @@ class Ant(Insect):
     blocks_path = True
     time_to_digest = 3
     is_container = False
+    enhanced = False
 
     def __init__(self, armor=1):
         """Create an Ant with an ARMOR quantity."""
@@ -416,28 +418,40 @@ class Water(Place):
         """Add an Insect to this place. If the insect is not watersafe, reduce
         its armor to 0."""
         # BEGIN Problem 11
-        "*** YOUR CODE HERE ***"
+        Place.add_insect(self, insect)
+        if insect.is_watersafe == False:
+            insect.reduce_armor(insect.armor)
         # END Problem 11
 
 # BEGIN Problem 12
 # The ScubaThrower class
+class ScubaThrower(ThrowerAnt):
+    food_cost = 6
+    is_watersafe = True
+    name = 'Scuba'
+    implemented = True
 # END Problem 12
 
 # BEGIN Problem 13
-class QueenAnt(Ant):  # You should change this line
+class QueenAnt(ScubaThrower):  # You should change this line
 # END Problem 13
     """The Queen of the colony. The game is over if a bee enters her place."""
 
     name = 'Queen'
     food_cost = 7
     # OVERRIDE CLASS ATTRIBUTES HERE
+    is_watersafe = True
+    real = True
     # BEGIN Problem 13
-    implemented = False   # Change to True to view in the GUI
+    implemented = True   # Change to True to view in the GUI
     # END Problem 13
 
     def __init__(self, armor=1):
         # BEGIN Problem 13
-        "*** YOUR CODE HERE ***"
+        ScubaThrower.__init__(self, armor)
+        self.real = QueenAnt.real
+        if self.real:
+            QueenAnt.real = False
         # END Problem 13
 
     def action(self, gamestate):
@@ -447,7 +461,30 @@ class QueenAnt(Ant):  # You should change this line
         Impostor queens do only one thing: reduce their own armor to 0.
         """
         # BEGIN Problem 13
-        "*** YOUR CODE HERE ***"
+        
+        if self.real is False:
+            self.reduce_armor(self.armor)
+            return
+        ScubaThrower.action(self, gamestate)
+        it = self.place.exit
+        while it is not None:
+            if it.ant is not None:
+                if isinstance(it.ant, ContainerAnt):
+                    if it.ant.enhanced is False:
+                        it.ant.enhanced = True
+                        it.ant.damage *= 2
+                    if it.ant.contained_ant is not None:
+                        if it.ant.contained_ant.enhanced is False:
+                            it.ant.contained_ant.enhanced = True
+                            it.ant.contained_ant.damage *= 2
+                else:
+                    if it.ant.enhanced is False:
+                        it.ant.enhanced = True
+                        it.ant.damage *= 2
+
+
+            it = it.exit
+
         # END Problem 13
 
     def reduce_armor(self, amount):
@@ -455,10 +492,18 @@ class QueenAnt(Ant):  # You should change this line
         remaining, signal the end of the game.
         """
         # BEGIN Problem 13
-        "*** YOUR CODE HERE ***"
+        self.armor -= amount
+        if self.real:
+            if self.armor <= 0:
+                bees_win()
+        elif self.armor <= 0:
+            self.place.remove_insect(self)
+            self.death_callback()
         # END Problem 13
 
-
+    def remove_from(self, place):
+        if self.real is False:
+            return ScubaThrower.remove_from(self, place)
 
 class AntRemover(Ant):
     """Allows the player to remove ants from the board in the GUI."""
@@ -475,7 +520,11 @@ class Bee(Insect):
     name = 'Bee'
     damage = 1
     # OVERRIDE CLASS ATTRIBUTES HERE
-
+    is_watersafe = True
+    scared = False
+    slow = False
+    scared_counter = 0
+    slow_counter = 0
 
     def sting(self, ant):
         """Attack an ANT, reducing its armor by 1."""
@@ -499,7 +548,11 @@ class Bee(Insect):
 
         gamestate -- The GameState, used to access game state information.
         """
-        destination = self.place.exit
+        if self.scared_counter > 0:
+            destination = self.place.entrance
+            self.scared_counter -= 1
+        else:
+            destination = self.place.exit
         # Extra credit: Special handling for bee direction
         # BEGIN EC
         "*** YOUR CODE HERE ***"
@@ -507,7 +560,12 @@ class Bee(Insect):
         if self.blocked():
             self.sting(self.place.ant)
         elif self.armor > 0 and destination is not None:
-            self.move_to(destination)
+            if self.slow_counter > 0:
+                if gamestate.time % 2 == 0:
+                    self.move_to(destination)
+                    self.slow_counter -= 1
+            else:
+                self.move_to(destination)
 
     def add_to(self, place):
         place.bees.append(self)
@@ -527,7 +585,11 @@ def make_slow(action, bee):
     action -- An action method of some Bee
     """
     # BEGIN Problem EC
-    "*** YOUR CODE HERE ***"
+    def ACTION(gamestate):
+        if gamestate.time % 2 == 0:
+            return action(gamestate)
+    
+    return ACTION
     # END Problem EC
 
 def make_scare(action, bee):
@@ -536,7 +598,7 @@ def make_scare(action, bee):
     action -- An action method of some Bee
     """
     # BEGIN Problem EC
-    "*** YOUR CODE HERE ***"
+
     # END Problem EC
 
 def apply_effect(effect, bee, duration):
