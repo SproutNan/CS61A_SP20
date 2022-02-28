@@ -1,6 +1,9 @@
 """ Lab 08: Midterm Review """
 
 # Linked lists
+from xml.dom import IndexSizeErr
+
+
 def insert(link, value, index):
     """Insert a value into a Link at the given index.
 
@@ -16,14 +19,17 @@ def insert(link, value, index):
     >>> insert(link, 4, 5)
     IndexError
     """
-    if ____________________:
-        ____________________
-        ____________________
-        ____________________
-    elif ____________________:
-        ____________________
+    
+    if index == 0:
+        link.rest = Link(link.first, link.rest)
+        link.first = value
+
+    elif link.rest is Link.empty:
+        raise IndexError
+
     else:
-        ____________________
+        insert(link.rest, value, index - 1)
+
 
 
 
@@ -37,7 +43,7 @@ def insert_into_all(item, nested_list):
     >>> insert_into_all(0, nl)
     [[0], [0, 1, 2], [0, 3]]
     """
-    return ______________________________
+    return [[item] + i for i in nested_list]
 
 def subseqs(s):
     """Assuming that S is a list, return a nested list of all subsequences
@@ -49,11 +55,13 @@ def subseqs(s):
     >>> subseqs([])
     [[]]
     """
-    if ________________:
-        ________________
+    
+    if s == []:
+        return [[]]
+    
     else:
-        ________________
-        ________________
+        return subseqs(s[1:]) + insert_into_all(s[0], subseqs(s[1:]))
+
 def inc_subseqs(s):
     """Assuming that S is a list, return a nested list of all subsequences
     of S (a list of lists) for which the elements of the subsequence
@@ -70,14 +78,14 @@ def inc_subseqs(s):
     """
     def subseq_helper(s, prev):
         if not s:
-            return ____________________
+            return [[]]
         elif s[0] < prev:
-            return ____________________
+            return subseq_helper(s[1:], prev)
         else:
-            a = ______________________
-            b = ______________________
-            return insert_into_all(________, ______________) + ________________
-    return subseq_helper(____, ____)
+            a = subseq_helper(s[1:], s[0])
+            b = subseq_helper(s[1:], prev)
+            return insert_into_all(s[0], a) + b
+    return subseq_helper(s, 0)
 
 # Generators
 def permutations(seq):
@@ -102,12 +110,12 @@ def permutations(seq):
     >>> sorted(permutations("ab"))
     [['a', 'b'], ['b', 'a']]
     """
-    if ____________________:
-        yield ____________________
+    if not seq:
+        yield []
     else:
-        for perm in _____________________:
-            for _____ in ________________:
-                _________________________
+        for perm in permutations(seq[1:]):
+            for i in range(len(seq)):
+                yield perm[:i] + [seq[0]] + perm[i:]
 
 # Tree class
 class Tree:
@@ -263,27 +271,25 @@ class Keyboard:
     """
 
     def __init__(self, *args):
-        ________________
-        for _________ in ________________:
-            ________________
+        self.buttons = []
+        for btn in args:
+            self.buttons.append(btn)
 
     def press(self, info):
         """Takes in a position of the button pressed, and
         returns that button's output"""
-        if ____________________:
-            ________________
-            ________________
-            ________________
-            ________________
-        ________________
+        if len(self.buttons) > info:
+            self.buttons[info].times_pressed += 1
+            return self.buttons[info].key
+        return ''
 
     def typing(self, typing_input):
         """Takes in a list of positions of buttons pressed, and
         returns the total output"""
-        ________________
-        for ________ in ____________________:
-            ________________
-        ________________
+        ans = ''
+        for i in typing_input:
+            ans += self.press(i)
+        return ans
 
 # Nonlocal
 def make_advanced_counter_maker():

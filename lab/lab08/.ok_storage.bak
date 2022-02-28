@@ -1,0 +1,6 @@
+'insert-correct', (0, 66)
+'subseqs-correct', (512, 66)
+'inc_subseqs-correct', (1024, 66)
+'permutations-correct', (1536, 66)
+'Orders of Growth-correct', (2048, 66)
+'Keyboard-correct', (2560, 66)
